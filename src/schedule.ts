@@ -57,7 +57,7 @@ export const FASES = [
     fertilizacion: {
       productos: [],
       dosis: [],
-      notas: 'Solo agua pH 6.3-6.7, sin fertilizantes'
+      notas: 'Solo agua de la llave, sin fertilizantes'
     },
     riego: {
       maceta: { min: 0.05, max: 0.1 },
@@ -162,7 +162,7 @@ export const FASES = [
     fertilizacion: {
       productos: [],
       dosis: [],
-      notas: 'Solo agua pH 6.3-6.7 para lavado'
+      notas: 'Solo agua de la llave para lavado'
     },
     riego: {
       maceta: { min: 2, max: 4 },
@@ -251,7 +251,7 @@ export function generarEventosSemana(fechaInicioSemana: Date, semana: number): E
       dosis: [],
       litrosPorPlanta: fase.riego,
       plantas: plantasLavado,
-      notas: 'Lavado de raíces - solo agua pH 6.3-6.7',
+      notas: 'Lavado de raíces - solo agua de la llave',
       fase: 'Lavado'
     });
   }
@@ -266,7 +266,7 @@ export function generarEventosSemana(fechaInicioSemana: Date, semana: number): E
       dosis: [],
       litrosPorPlanta: fase.riego,
       plantas: PLANTAS.map(p => p.id),
-      notas: 'Riego con agua pH 6.3-6.7',
+      notas: 'Riego con agua de la llave',
       fase: fase.nombre
     });
   });

@@ -302,7 +302,7 @@ function DetallesPanel({ evento, onCerrar }: DetallesPanelProps) {
                               </div>
                             ))
                           ) : (
-                            'Solo agua pH 6.3-6.7'
+                            'Solo agua de la llave'
                           )}
                         </td>
                       </tr>

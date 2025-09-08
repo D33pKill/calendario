@@ -7,7 +7,7 @@ Una aplicación web para gestionar el calendario de cultivo de cannabis exterior
 - **Calendario semanal** desde septiembre 2025 hasta marzo 2026
 - **5 plantas configuradas**: 1 Fresh Candy (suelo) + 4 Cream Mandarine F1 Fast (1 suelo + 3 macetas)
 - **Fases de cultivo** desde germinación hasta cosecha
-- **Eventos automáticos**: fertilización semanal + riegos de agua
+- **Eventos automáticos**: fertilización semanal + riegos de agua de la llave
 - **Filtros por planta** para ver eventos específicos
 - **Panel de detalles** con dosis exactas por tipo de planta
 - **Semáforo visual** que resalta la semana actual y próximo fertilizante
@@ -81,14 +81,14 @@ Una aplicación web para gestionar el calendario de cultivo de cannabis exterior
 
 ### Fases del Cultivo
 
-1. **Germinación** (Semanas 0-1): Solo agua pH 6.3-6.7
+1. **Germinación** (Semanas 0-1): Solo agua de la llave
 2. **Crecimiento Inicial** (Semanas 2-3): Deeper Underground 1 ml/L
 3. **Crecimiento Vegetativo Temprano** (Semanas 4-5): Deeper Underground + Top Veg
 4. **Crecimiento Vegetativo Intenso** (Semanas 6-11): Solo Top Veg
 5. **Pre-floración** (Semanas 12-17): Top Veg máximo
 6. **Transición a Floración** (Semanas 18-19): Top Veg + Top Bloom
 7. **Floración Intensa** (Semanas 20-25): Solo Top Bloom
-8. **Lavado y Cosecha** (Semanas 26-30): Solo agua pH
+8. **Lavado y Cosecha** (Semanas 26-30): Solo agua de la llave
 
 ### Fechas de Cosecha
 
