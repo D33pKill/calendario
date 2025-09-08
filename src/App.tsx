@@ -319,6 +319,103 @@ function DetallesPanel({ evento, onCerrar }: DetallesPanelProps) {
   );
 }
 
+// Función para enviar notificación por WhatsApp
+function enviarWhatsApp(mensaje: string) {
+  const numero = '56937244264';
+  const mensajeCodificado = encodeURIComponent(mensaje);
+  const url = `https://wa.me/${numero}?text=${mensajeCodificado}`;
+  window.open(url, '_blank');
+}
+
+// Tipos para recordatorios
+interface Recordatorio {
+  tipo: 'fertilizacion-hoy' | 'fertilizacion-manana' | 'trasplante';
+  mensaje: string;
+  urgencia: 'alta' | 'media';
+}
+
+// Función para generar recordatorios de cultivo
+function generarRecordatorios(fechaActual: Date): Recordatorio[] {
+  const semanas = generarTodasLasSemanas();
+  const recordatorios: Recordatorio[] = [];
+  
+  // Encontrar la semana actual
+  const semanaActual = semanas.find(semana => 
+    (fechaActual >= semana.fechaInicio && fechaActual <= semana.fechaFin) ||
+    isToday(semana.fechaInicio) || isToday(semana.fechaFin)
+  );
+  
+  if (!semanaActual) return recordatorios;
+  
+  // Recordatorios de fertilización
+  const eventosFertilizacion = semanaActual.eventos.filter(e => e.tipo === 'fertilizacion');
+  eventosFertilizacion.forEach(evento => {
+    const diasRestantes = Math.ceil((evento.fecha.getTime() - fechaActual.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diasRestantes === 0) {
+      recordatorios.push({
+        tipo: 'fertilizacion-hoy',
+        mensaje: `🌱 HOY: Fertilización\n\nProductos: ${evento.productos.join(', ')}\nDosis: ${evento.dosis.join(' ml/L, ')} ml/L\nMaceta: ${evento.litrosPorPlanta.maceta.min}-${evento.litrosPorPlanta.maceta.max}L\nSuelo: ${evento.litrosPorPlanta.suelo.min}-${evento.litrosPorPlanta.suelo.max}L\n\nNotas: ${evento.notas}`,
+        urgencia: 'alta'
+      });
+    } else if (diasRestantes === 1) {
+      recordatorios.push({
+        tipo: 'fertilizacion-manana',
+        mensaje: `🌱 MAÑANA: Fertilización\n\nProductos: ${evento.productos.join(', ')}\nDosis: ${evento.dosis.join(' ml/L, ')} ml/L\nMaceta: ${evento.litrosPorPlanta.maceta.min}-${evento.litrosPorPlanta.maceta.max}L\nSuelo: ${evento.litrosPorPlanta.suelo.min}-${evento.litrosPorPlanta.suelo.max}L\n\nNotas: ${evento.notas}`,
+        urgencia: 'media'
+      });
+    }
+  });
+  
+  // Recordatorios de trasplante
+  const semanaTrasplante = semanas.find(semana => semana.semana === 5); // Semana 6 (índice 5)
+  if (semanaTrasplante && fechaActual >= semanaTrasplante.fechaInicio && fechaActual <= semanaTrasplante.fechaFin) {
+    recordatorios.push({
+      tipo: 'trasplante',
+      mensaje: `🌿 MOMENTO IDEAL DE TRASPLANTE\n\nSemana 6 - Crecimiento Vegetativo Intenso\n\n📋 Instrucciones:\n• Fresh Candy: Trasplantar a suelo directo\n• Cream Mandarine #1: Trasplantar a suelo directo\n• Cream Mandarine #2-4: Trasplantar a macetas definitivas (más grandes)\n\n💡 Consejos:\n• Hacerlo en horas de menor calor\n• Regar bien después del trasplante\n• Usar sustrato de buena calidad`,
+      urgencia: 'media'
+    });
+  }
+  
+  return recordatorios;
+}
+
+// Componente de notificaciones WhatsApp
+function NotificacionesWhatsApp({ fechaActual }: { fechaActual: Date }) {
+  const recordatorios = useMemo(() => generarRecordatorios(fechaActual), [fechaActual]);
+  
+  if (recordatorios.length === 0) return null;
+  
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
+      <h3 className="text-sm font-medium text-gray-900 mb-3">📱 Notificaciones WhatsApp</h3>
+      <div className="space-y-2">
+        {recordatorios.map((recordatorio, index) => (
+          <div key={index} className={`p-2 rounded-lg border ${
+            recordatorio.urgencia === 'alta' 
+              ? 'bg-red-50 border-red-200' 
+              : 'bg-yellow-50 border-yellow-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium">
+                {recordatorio.tipo === 'fertilizacion-hoy' ? '🌱 Fertilización HOY' :
+                 recordatorio.tipo === 'fertilizacion-manana' ? '🌱 Fertilización MAÑANA' :
+                 '🌿 Trasplante'}
+              </span>
+              <button
+                onClick={() => enviarWhatsApp(recordatorio.mensaje)}
+                className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"
+              >
+                Enviar WhatsApp
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Componente de reloj
 function Reloj({ fechaActual }: { fechaActual: Date }) {
   const semanas = generarTodasLasSemanas();
@@ -400,6 +497,38 @@ function App() {
     window.print();
   };
 
+  const handleEnviarResumenWhatsApp = () => {
+    const semanas = generarTodasLasSemanas();
+    const semanaActual = semanas.find(semana => 
+      (fechaActual >= semana.fechaInicio && fechaActual <= semana.fechaFin) ||
+      isToday(semana.fechaInicio) || isToday(semana.fechaFin)
+    );
+    
+    if (!semanaActual) return;
+    
+    const proximoFertilizante = semanaActual.eventos.find(e => e.tipo === 'fertilizacion');
+    
+    let mensaje = `🌱 RESUMEN CULTIVO - ${format(fechaActual, 'dd/MM/yyyy', { locale: es })}\n\n`;
+    mensaje += `📅 Semana ${semanaActual.semana + 1}: ${formatearRangoSemana(semanaActual.fechaInicio, semanaActual.fechaFin)}\n\n`;
+    
+    if (proximoFertilizante) {
+      mensaje += `🌱 Próximo fertilizante: ${format(proximoFertilizante.fecha, 'dd/MM', { locale: es })}\n`;
+      mensaje += `Productos: ${proximoFertilizante.productos.join(', ')}\n`;
+      mensaje += `Dosis: ${proximoFertilizante.dosis.join(' ml/L, ')} ml/L\n\n`;
+    } else {
+      mensaje += `💧 Solo riegos de agua de la llave\n\n`;
+    }
+    
+    mensaje += `📋 Plantas:\n`;
+    PLANTAS.forEach(planta => {
+      mensaje += `• ${planta.nombre} (${planta.tipo})\n`;
+    });
+    
+    mensaje += `\n🌿 Fase: ${semanaActual.eventos[0]?.fase || 'Germinación'}`;
+    
+    enviarWhatsApp(mensaje);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -414,12 +543,20 @@ function App() {
                 Santiago de Chile • 5 plantas • 2025-09-04 → 2026-03-16
               </p>
             </div>
-            <button
-              onClick={handleImprimir}
-              className="btn-primary"
-            >
-              📄 Imprimir/PDF
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleEnviarResumenWhatsApp}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              >
+                📱 WhatsApp
+              </button>
+              <button
+                onClick={handleImprimir}
+                className="btn-primary"
+              >
+                📄 Imprimir/PDF
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -429,6 +566,8 @@ function App() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <Reloj fechaActual={fechaActual} />
+            
+            <NotificacionesWhatsApp fechaActual={fechaActual} />
             
             <Filtros 
               filtroPlanta={filtroPlanta}
