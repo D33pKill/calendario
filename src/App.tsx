@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   generarTodasLasSemanas, 
   obtenerProximoFertilizante, 
@@ -156,9 +156,9 @@ interface SemanaCardProps {
   onSeleccionarEvento: (evento: Evento) => void;
 }
 
-function SemanaCard({ semana, filtroPlanta, proximoFertilizante, onSeleccionarEvento }: SemanaCardProps) {
+function SemanaCard({ semana, filtroPlanta, proximoFertilizante, onSeleccionarEvento, fechaActual }: SemanaCardProps & { fechaActual: Date }) {
   const esHoy = isToday(semana.fechaInicio) || isToday(semana.fechaFin) || 
-    isSameWeek(new Date(), semana.fechaInicio, { weekStartsOn: 1 });
+    isSameWeek(fechaActual, semana.fechaInicio, { weekStartsOn: 1 });
   
   const esProximo = Boolean(proximoFertilizante && 
     isSameWeek(proximoFertilizante.fecha, semana.fechaInicio, { weekStartsOn: 1 }));
@@ -318,10 +318,69 @@ function DetallesPanel({ evento, onCerrar }: DetallesPanelProps) {
   );
 }
 
+// Componente de reloj
+function Reloj({ fechaActual }: { fechaActual: Date }) {
+  const semanas = generarTodasLasSemanas();
+  const proximoFertilizante = obtenerProximoFertilizante();
+  
+  // Encontrar la semana actual
+  const semanaActual = semanas.find(semana => 
+    isToday(semana.fechaInicio) || isToday(semana.fechaFin) || 
+    isSameWeek(fechaActual, semana.fechaInicio, { weekStartsOn: 1 })
+  );
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-gray-900">Fecha y Hora Actual</h3>
+            <p className="text-lg font-mono text-cultivo-600">
+              {format(fechaActual, 'dd/MM/yyyy HH:mm:ss', { locale: es })}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-500">Santiago, Chile</p>
+            <p className="text-xs text-gray-500">
+              {format(fechaActual, 'EEEE', { locale: es })}
+            </p>
+          </div>
+        </div>
+        
+        {semanaActual && (
+          <div className="bg-cultivo-50 border border-cultivo-200 rounded-lg p-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-cultivo-800">
+                Semana {semanaActual.semana + 1}
+              </span>
+              <span className="text-xs text-cultivo-600">
+                {formatearRangoSemana(semanaActual.fechaInicio, semanaActual.fechaFin)}
+              </span>
+            </div>
+            <p className="text-xs text-cultivo-600 mt-1">
+              {proximoFertilizante ? 'Próximo fertilizante: ' + format(proximoFertilizante.fecha, 'dd/MM', { locale: es }) : 'Solo riegos de agua'}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Componente principal
 function App() {
   const [filtroPlanta, setFiltroPlanta] = useState('todas');
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null);
+  const [fechaActual, setFechaActual] = useState(new Date());
+  
+  // Actualizar fecha cada minuto
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFechaActual(new Date());
+    }, 60000); // Actualizar cada minuto
+
+    return () => clearInterval(timer);
+  }, []);
   
   const semanas = generarTodasLasSemanas();
   const proximoFertilizante = obtenerProximoFertilizante();
@@ -358,6 +417,8 @@ function App() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1">
+            <Reloj fechaActual={fechaActual} />
+            
             <Filtros 
               filtroPlanta={filtroPlanta}
               onFiltroChange={setFiltroPlanta}
@@ -387,6 +448,7 @@ function App() {
                   filtroPlanta={filtroPlanta}
                   proximoFertilizante={proximoFertilizante}
                   onSeleccionarEvento={setEventoSeleccionado}
+                  fechaActual={fechaActual}
                 />
               ))}
             </div>
