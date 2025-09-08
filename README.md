@@ -4,7 +4,7 @@ Una aplicación web para gestionar el calendario de cultivo de cannabis exterior
 
 ## 🌱 Características
 
-- **Calendario semanal** desde septiembre 2025 hasta marzo 2026
+- **Calendario semanal** desde enero 2025 hasta julio 2025
 - **5 plantas configuradas**: 1 Fresh Candy (suelo) + 4 Cream Mandarine F1 Fast (1 suelo + 3 macetas)
 - **Fases de cultivo** desde germinación hasta cosecha
 - **Eventos automáticos**: fertilización semanal + riegos de agua
@@ -92,8 +92,8 @@ Una aplicación web para gestionar el calendario de cultivo de cannabis exterior
 
 ### Fechas de Cosecha
 
-- **Cream Mandarine**: Lavado 17-24 feb, Cosecha 24 feb - 10 mar
-- **Fresh Candy**: Lavado 23 feb - 2 mar, Cosecha 2-16 mar
+- **Cream Mandarine**: Lavado 17-24 jun, Cosecha 24 jun - 10 jul
+- **Fresh Candy**: Lavado 23 jun - 2 jul, Cosecha 2-16 jul
 
 ## 🛠️ Personalización
 
