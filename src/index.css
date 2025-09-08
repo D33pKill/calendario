@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4;
+  }
+  
+  .card-hover {
+    @apply hover:shadow-md transition-shadow duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-cultivo-600 hover:bg-cultivo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-fertilizacion {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .badge-riego {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  .badge-lavado {
+    @apply bg-orange-100 text-orange-800;
+  }
+  
+  .badge-cosecha {
+    @apply bg-purple-100 text-purple-800;
+  }
+  
+  .semaforo-hoy {
+    @apply ring-2 ring-cultivo-500 bg-cultivo-50;
+  }
+  
+  .semaforo-proximo {
+    @apply ring-2 ring-yellow-400 bg-yellow-50;
+  }
+}
