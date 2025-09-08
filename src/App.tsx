@@ -423,13 +423,23 @@ function NotificacionesWhatsApp({ fechaActual }: { fechaActual: Date }) {
         </button>
       </div>
       
+      <div className="bg-green-50 border border-green-200 rounded-lg p-2 mb-3">
+        <div className="flex items-center">
+          <span className="text-green-600 text-sm">✅</span>
+          <p className="text-xs text-green-800 ml-2">
+            <strong>Automático:</strong> Las notificaciones se envían solas cuando corresponde
+          </p>
+        </div>
+      </div>
+      
       {recordatorios.length === 0 ? (
         <div className="text-center text-gray-500 py-2">
-          <p className="text-xs">No hay notificaciones activas</p>
-          <p className="text-xs">El sistema te avisará automáticamente</p>
+          <p className="text-xs">No hay notificaciones activas hoy</p>
+          <p className="text-xs">El sistema te avisará automáticamente cuando sea necesario</p>
         </div>
       ) : (
         <div className="space-y-2">
+          <p className="text-xs text-gray-600 mb-2">Alertas que se enviarán automáticamente:</p>
           {recordatorios.map((recordatorio, index) => (
             <div key={index} className={`p-2 rounded-lg border ${
               recordatorio.urgencia === 'alta' 
@@ -437,19 +447,19 @@ function NotificacionesWhatsApp({ fechaActual }: { fechaActual: Date }) {
                 : 'bg-yellow-50 border-yellow-200'
             }`}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium">
-                  {recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('CAMBIO DE FASE') ? '🌿 Cambio de Fase' :
-                   recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Fertilización') ? '🌱 Fertilización HOY' :
-                   recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Riego') ? '💧 Riego HOY' :
-                   recordatorio.tipo === 'fertilizacion-manana' ? '🌱 Fertilización MAÑANA' :
-                   '🌿 Trasplante'}
-                </span>
-                <button
-                  onClick={() => enviarWhatsApp(recordatorio.mensaje)}
-                  className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"
-                >
-                  Enviar
-                </button>
+                <div className="flex items-center">
+                  <span className="text-xs font-medium">
+                    {recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('CAMBIO DE FASE') ? '🌿 Cambio de Fase' :
+                     recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Fertilización') ? '🌱 Fertilización HOY' :
+                     recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Riego') ? '💧 Riego HOY' :
+                     recordatorio.tipo === 'fertilizacion-manana' ? '🌱 Fertilización MAÑANA' :
+                     '🌿 Trasplante'}
+                  </span>
+                  <span className="text-xs text-gray-500 ml-2">
+                    {recordatorio.urgencia === 'alta' ? '(Urgente)' : '(Recordatorio)'}
+                  </span>
+                </div>
+                <span className="text-xs text-green-600">✓ Auto</span>
               </div>
             </div>
           ))}
@@ -544,14 +554,33 @@ function App() {
       
       // Solo enviar si no se ha enviado hoy
       if (!alertasEnviadas.has(claveAlerta)) {
-        // Enviar automáticamente alertas de urgencia alta
-        if (recordatorio.urgencia === 'alta') {
-          enviarWhatsApp(recordatorio.mensaje);
-          setAlertasEnviadas(prev => new Set([...prev, claveAlerta]));
-        }
+        // Enviar automáticamente TODAS las alertas
+        enviarWhatsApp(recordatorio.mensaje);
+        setAlertasEnviadas(prev => new Set([...prev, claveAlerta]));
       }
     });
   }, [fechaActual, alertasEnviadas]);
+
+  // Sistema de notificaciones programadas (cada 6 horas)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const ahora = new Date();
+      const recordatorios = generarRecordatorios(ahora);
+      const hoy = format(ahora, 'yyyy-MM-dd', { locale: es });
+      
+      recordatorios.forEach(recordatorio => {
+        const claveAlerta = `${hoy}-${recordatorio.tipo}-${ahora.getHours()}`;
+        
+        // Solo enviar si no se ha enviado en esta hora
+        if (!alertasEnviadas.has(claveAlerta)) {
+          enviarWhatsApp(recordatorio.mensaje);
+          setAlertasEnviadas(prev => new Set([...prev, claveAlerta]));
+        }
+      });
+    }, 6 * 60 * 60 * 1000); // Cada 6 horas
+
+    return () => clearInterval(interval);
+  }, [alertasEnviadas]);
   
   const semanas = generarTodasLasSemanas();
   const proximoFertilizante = obtenerProximoFertilizante();
