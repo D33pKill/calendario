@@ -341,7 +341,7 @@ function App() {
                 Calendario de Cultivo
               </h1>
               <p className="text-sm text-gray-600">
-                Santiago de Chile • 5 plantas • 2025-01-08 → 2025-07-16
+                Santiago de Chile • 5 plantas • 2025-09-04 → 2026-03-16
               </p>
             </div>
             <button

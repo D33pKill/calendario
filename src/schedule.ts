@@ -3,8 +3,8 @@ import { es } from 'date-fns/locale';
 
 // Configuración de fechas
 export const CULTIVO_CONFIG = {
-  inicio: new Date('2025-01-08'), // Fecha real de inicio (8 de enero 2025)
-  fin: new Date('2025-07-16'), // Fecha estimada de fin (16 de julio 2025)
+  inicio: new Date('2025-09-04'), // Fecha real de germinación (4 de septiembre 2025)
+  fin: new Date('2026-03-16'), // Fecha estimada de fin (16 de marzo 2026)
   zonaHoraria: 'America/Santiago'
 };
 
@@ -174,12 +174,12 @@ export const FASES = [
 // Fechas de lavado específicas por variedad
 export const FECHAS_LAVADO = {
   'cream-mandarine': {
-    lavado: new Date('2025-06-17'),
-    cosecha: { inicio: new Date('2025-06-24'), fin: new Date('2025-07-10') }
+    lavado: new Date('2026-02-17'),
+    cosecha: { inicio: new Date('2026-02-24'), fin: new Date('2026-03-10') }
   },
   'fresh-candy': {
-    lavado: new Date('2025-06-23'),
-    cosecha: { inicio: new Date('2025-07-02'), fin: new Date('2025-07-16') }
+    lavado: new Date('2026-02-23'),
+    cosecha: { inicio: new Date('2026-03-02'), fin: new Date('2026-03-16') }
   }
 };
 
