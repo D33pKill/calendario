@@ -157,8 +157,9 @@ interface SemanaCardProps {
 }
 
 function SemanaCard({ semana, filtroPlanta, proximoFertilizante, onSeleccionarEvento, fechaActual }: SemanaCardProps & { fechaActual: Date }) {
-  const esHoy = isToday(semana.fechaInicio) || isToday(semana.fechaFin) || 
-    isSameWeek(fechaActual, semana.fechaInicio, { weekStartsOn: 1 });
+  // Verificar si la fecha actual está dentro del rango de la semana
+  const esHoy = (fechaActual >= semana.fechaInicio && fechaActual <= semana.fechaFin) ||
+    isToday(semana.fechaInicio) || isToday(semana.fechaFin);
   
   const esProximo = Boolean(proximoFertilizante && 
     isSameWeek(proximoFertilizante.fecha, semana.fechaInicio, { weekStartsOn: 1 }));
@@ -321,12 +322,22 @@ function DetallesPanel({ evento, onCerrar }: DetallesPanelProps) {
 // Componente de reloj
 function Reloj({ fechaActual }: { fechaActual: Date }) {
   const semanas = generarTodasLasSemanas();
-  const proximoFertilizante = obtenerProximoFertilizante();
+  
+  // Obtener próximo fertilizante usando la fecha actual del estado
+  const proximoFertilizante = useMemo(() => {
+    for (const semana of semanas) {
+      const proximo = semana.eventos.find(e => 
+        e.tipo === 'fertilizacion' && e.fecha >= fechaActual
+      );
+      if (proximo) return proximo;
+    }
+    return null;
+  }, [semanas, fechaActual]);
   
   // Encontrar la semana actual
   const semanaActual = semanas.find(semana => 
-    isToday(semana.fechaInicio) || isToday(semana.fechaFin) || 
-    isSameWeek(fechaActual, semana.fechaInicio, { weekStartsOn: 1 })
+    (fechaActual >= semana.fechaInicio && fechaActual <= semana.fechaFin) ||
+    isToday(semana.fechaInicio) || isToday(semana.fechaFin)
   );
 
   return (
