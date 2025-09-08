@@ -347,6 +347,14 @@ function generarRecordatorios(fechaActual: Date): Recordatorio[] {
   
   if (!semanaActual) return recordatorios;
   
+  // Recordatorios de cambio de fase
+  const faseActual = semanaActual.eventos[0]?.fase || 'Germinación';
+  recordatorios.push({
+    tipo: 'fertilizacion-hoy',
+    mensaje: `🌿 CAMBIO DE FASE DETECTADO\n\nFase actual: ${faseActual}\nSemana ${semanaActual.semana + 1}\n\n📅 Rango: ${formatearRangoSemana(semanaActual.fechaInicio, semanaActual.fechaFin)}\n\n⚠️ IMPORTANTE: Ajusta el cuidado según la nueva fase`,
+    urgencia: 'media'
+  });
+  
   // Recordatorios de fertilización
   const eventosFertilizacion = semanaActual.eventos.filter(e => e.tipo === 'fertilizacion');
   eventosFertilizacion.forEach(evento => {
@@ -363,6 +371,20 @@ function generarRecordatorios(fechaActual: Date): Recordatorio[] {
         tipo: 'fertilizacion-manana',
         mensaje: `🌱 MAÑANA: Fertilización\n\nProductos: ${evento.productos.join(', ')}\nDosis: ${evento.dosis.join(' ml/L, ')} ml/L\nMaceta: ${evento.litrosPorPlanta.maceta.min}-${evento.litrosPorPlanta.maceta.max}L\nSuelo: ${evento.litrosPorPlanta.suelo.min}-${evento.litrosPorPlanta.suelo.max}L\n\nNotas: ${evento.notas}`,
         urgencia: 'media'
+      });
+    }
+  });
+  
+  // Recordatorios de riego (evitar sobre-riego)
+  const eventosRiego = semanaActual.eventos.filter(e => e.tipo === 'riego');
+  eventosRiego.forEach(evento => {
+    const diasRestantes = Math.ceil((evento.fecha.getTime() - fechaActual.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diasRestantes === 0) {
+      recordatorios.push({
+        tipo: 'fertilizacion-hoy',
+        mensaje: `💧 HOY: Riego\n\n⏰ Hora sugerida: ${format(evento.fecha, 'HH:mm', { locale: es })}\n\n📏 Cantidades:\n• Maceta: ${evento.litrosPorPlanta.maceta.min}-${evento.litrosPorPlanta.maceta.max}L\n• Suelo: ${evento.litrosPorPlanta.suelo.min}-${evento.litrosPorPlanta.suelo.max}L\n\n⚠️ NO SOBRE-REGAR: Verifica que el sustrato esté seco antes de regar\n\nNotas: ${evento.notas}`,
+        urgencia: 'alta'
       });
     }
   });
@@ -384,34 +406,55 @@ function generarRecordatorios(fechaActual: Date): Recordatorio[] {
 function NotificacionesWhatsApp({ fechaActual }: { fechaActual: Date }) {
   const recordatorios = useMemo(() => generarRecordatorios(fechaActual), [fechaActual]);
   
-  if (recordatorios.length === 0) return null;
+  const handleProbarWhatsApp = () => {
+    const mensajePrueba = `🧪 PRUEBA DE NOTIFICACIONES\n\n📱 Calendario de Cultivo - Santiago de Chile\n\n✅ Sistema funcionando correctamente\n📅 Fecha: ${format(fechaActual, 'dd/MM/yyyy HH:mm', { locale: es })}\n\n🌱 Tu cultivo está siendo monitoreado automáticamente\n\n📞 Número configurado: +56937244264`;
+    enviarWhatsApp(mensajePrueba);
+  };
   
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
-      <h3 className="text-sm font-medium text-gray-900 mb-3">📱 Notificaciones WhatsApp</h3>
-      <div className="space-y-2">
-        {recordatorios.map((recordatorio, index) => (
-          <div key={index} className={`p-2 rounded-lg border ${
-            recordatorio.urgencia === 'alta' 
-              ? 'bg-red-50 border-red-200' 
-              : 'bg-yellow-50 border-yellow-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">
-                {recordatorio.tipo === 'fertilizacion-hoy' ? '🌱 Fertilización HOY' :
-                 recordatorio.tipo === 'fertilizacion-manana' ? '🌱 Fertilización MAÑANA' :
-                 '🌿 Trasplante'}
-              </span>
-              <button
-                onClick={() => enviarWhatsApp(recordatorio.mensaje)}
-                className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"
-              >
-                Enviar WhatsApp
-              </button>
-            </div>
-          </div>
-        ))}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-gray-900">📱 Notificaciones WhatsApp</h3>
+        <button
+          onClick={handleProbarWhatsApp}
+          className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
+        >
+          🧪 Probar
+        </button>
       </div>
+      
+      {recordatorios.length === 0 ? (
+        <div className="text-center text-gray-500 py-2">
+          <p className="text-xs">No hay notificaciones activas</p>
+          <p className="text-xs">El sistema te avisará automáticamente</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {recordatorios.map((recordatorio, index) => (
+            <div key={index} className={`p-2 rounded-lg border ${
+              recordatorio.urgencia === 'alta' 
+                ? 'bg-red-50 border-red-200' 
+                : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">
+                  {recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('CAMBIO DE FASE') ? '🌿 Cambio de Fase' :
+                   recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Fertilización') ? '🌱 Fertilización HOY' :
+                   recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Riego') ? '💧 Riego HOY' :
+                   recordatorio.tipo === 'fertilizacion-manana' ? '🌱 Fertilización MAÑANA' :
+                   '🌿 Trasplante'}
+                </span>
+                <button
+                  onClick={() => enviarWhatsApp(recordatorio.mensaje)}
+                  className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"
+                >
+                  Enviar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -480,6 +523,7 @@ function App() {
   const [filtroPlanta, setFiltroPlanta] = useState('todas');
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null);
   const [fechaActual, setFechaActual] = useState(new Date());
+  const [alertasEnviadas, setAlertasEnviadas] = useState<Set<string>>(new Set());
   
   // Actualizar fecha cada minuto
   useEffect(() => {
@@ -489,6 +533,25 @@ function App() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Sistema de alertas automáticas
+  useEffect(() => {
+    const recordatorios = generarRecordatorios(fechaActual);
+    const hoy = format(fechaActual, 'yyyy-MM-dd', { locale: es });
+    
+    recordatorios.forEach(recordatorio => {
+      const claveAlerta = `${hoy}-${recordatorio.tipo}`;
+      
+      // Solo enviar si no se ha enviado hoy
+      if (!alertasEnviadas.has(claveAlerta)) {
+        // Enviar automáticamente alertas de urgencia alta
+        if (recordatorio.urgencia === 'alta') {
+          enviarWhatsApp(recordatorio.mensaje);
+          setAlertasEnviadas(prev => new Set([...prev, claveAlerta]));
+        }
+      }
+    });
+  }, [fechaActual, alertasEnviadas]);
   
   const semanas = generarTodasLasSemanas();
   const proximoFertilizante = obtenerProximoFertilizante();
