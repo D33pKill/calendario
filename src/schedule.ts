@@ -15,35 +15,40 @@ export const PLANTAS = [
     nombre: 'Fresh Candy',
     banco: 'Sweet Seeds',
     tipo: 'suelo' as const,
-    notas: 'Cultivo en suelo directo'
+    notas: 'Cultivo en suelo directo',
+    phSuelo: { min: 6.2, max: 6.6 }
   },
   {
     id: 'cream-mandarine-suelo',
     nombre: 'Cream Mandarine F1 Fast',
     banco: 'Sweet Seeds',
     tipo: 'suelo' as const,
-    notas: 'Cultivo en suelo directo'
+    notas: 'Cultivo en suelo directo',
+    phSuelo: { min: 6.3, max: 6.6 }
   },
   {
     id: 'cream-mandarine-maceta-1',
     nombre: 'Cream Mandarine F1 Fast #1',
     banco: 'Sweet Seeds',
     tipo: 'maceta' as const,
-    notas: 'Cultivo en maceta'
+    notas: 'Cultivo en maceta',
+    phSuelo: { min: 6.3, max: 6.6 }
   },
   {
     id: 'cream-mandarine-maceta-2',
     nombre: 'Cream Mandarine F1 Fast #2',
     banco: 'Sweet Seeds',
     tipo: 'maceta' as const,
-    notas: 'Cultivo en maceta'
+    notas: 'Cultivo en maceta',
+    phSuelo: { min: 6.3, max: 6.6 }
   },
   {
     id: 'cream-mandarine-maceta-3',
     nombre: 'Cream Mandarine F1 Fast #3',
     banco: 'Sweet Seeds',
     tipo: 'maceta' as const,
-    notas: 'Cultivo en maceta'
+    notas: 'Cultivo en maceta',
+    phSuelo: { min: 6.3, max: 6.6 }
   }
 ];
 
