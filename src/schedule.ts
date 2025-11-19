@@ -1,54 +1,54 @@
-import { addWeeks, addDays, format, isWithinInterval } from 'date-fns';
+import { addWeeks, addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 // Configuración de fechas
 export const CULTIVO_CONFIG = {
-  inicio: new Date('2025-09-04'), // Fecha real de germinación (4 de septiembre 2025)
-  fin: new Date('2026-03-16'), // Fecha estimada de fin (16 de marzo 2026)
+  inicio: new Date('2025-09-04'), // Fecha de inicio de temporada (Primavera)
+  fin: new Date('2026-03-16'), // Fin de temporada
   zonaHoraria: 'America/Santiago'
 };
 
-// Plantas del cultivo
+// Plantas del huerto
 export const PLANTAS = [
   {
-    id: 'fresh-candy-suelo',
-    nombre: 'Fresh Candy',
-    banco: 'Sweet Seeds',
+    id: 'tomate-cherry',
+    nombre: 'Tomate Cherry',
+    banco: 'Semillas Orgánicas',
+    tipo: 'maceta' as const,
+    notas: 'Ideal para balcones',
+    phSuelo: { min: 6.0, max: 6.8 }
+  },
+  {
+    id: 'tomate-raf',
+    nombre: 'Tomate Raf',
+    banco: 'Huerto Local',
     tipo: 'suelo' as const,
-    notas: 'Cultivo en suelo directo',
-    phSuelo: { min: 6.2, max: 6.6 }
+    notas: 'Requiere entutorado',
+    phSuelo: { min: 6.2, max: 6.8 }
   },
   {
-    id: 'cream-mandarine-suelo',
-    nombre: 'Cream Mandarine F1 Fast',
-    banco: 'Sweet Seeds',
+    id: 'albahaca',
+    nombre: 'Albahaca Genovesa',
+    banco: 'Aromáticas',
+    tipo: 'maceta' as const,
+    notas: 'Compañera del tomate',
+    phSuelo: { min: 6.0, max: 7.0 }
+  },
+  {
+    id: 'pimiento',
+    nombre: 'Pimiento Italiano',
+    banco: 'Huerto Local',
     tipo: 'suelo' as const,
-    notas: 'Cultivo en suelo directo',
-    phSuelo: { min: 6.3, max: 6.6 }
+    notas: 'Necesita mucho sol',
+    phSuelo: { min: 6.0, max: 7.0 }
   },
   {
-    id: 'cream-mandarine-maceta-1',
-    nombre: 'Cream Mandarine F1 Fast #1',
-    banco: 'Sweet Seeds',
+    id: 'lechuga',
+    nombre: 'Lechuga Costina',
+    banco: 'Hojas Verdes',
     tipo: 'maceta' as const,
-    notas: 'Cultivo en maceta',
-    phSuelo: { min: 6.3, max: 6.6 }
-  },
-  {
-    id: 'cream-mandarine-maceta-2',
-    nombre: 'Cream Mandarine F1 Fast #2',
-    banco: 'Sweet Seeds',
-    tipo: 'maceta' as const,
-    notas: 'Cultivo en maceta',
-    phSuelo: { min: 6.3, max: 6.6 }
-  },
-  {
-    id: 'cream-mandarine-maceta-3',
-    nombre: 'Cream Mandarine F1 Fast #3',
-    banco: 'Sweet Seeds',
-    tipo: 'maceta' as const,
-    notas: 'Cultivo en maceta',
-    phSuelo: { min: 6.3, max: 6.6 }
+    notas: 'Riego frecuente',
+    phSuelo: { min: 6.0, max: 7.0 }
   }
 ];
 
@@ -56,140 +56,83 @@ export const PLANTAS = [
 export const FASES = [
   {
     id: 'germinacion',
-    nombre: 'Germinación',
-    semanas: [0, 1], // Semanas 0-1 (2025-09-08 → 2025-09-21)
-    descripcion: 'Fase de germinación y primeras hojas cotiledonares',
+    nombre: 'Germinación y Plántula',
+    semanas: [0, 2], 
+    descripcion: 'Emergencia de semillas y desarrollo de primeras hojas verdaderas',
     fertilizacion: {
       productos: [],
       dosis: [],
-      notas: 'Solo agua de la llave, sin fertilizantes'
+      notas: 'Mantener sustrato húmedo, sin fertilizantes'
     },
     riego: {
-      maceta: { min: 0.05, max: 0.1 },
-      suelo: { min: 0.1, max: 0.2 }
+      maceta: { min: 0.1, max: 0.2 },
+      suelo: { min: 0.2, max: 0.3 }
     }
   },
   {
-    id: 'fase1',
-    nombre: 'Crecimiento Inicial',
-    semanas: [2, 3], // Semanas 2-3 (2025-09-22 → 2025-10-05)
-    descripcion: 'Primeras hojas verdaderas, desarrollo de raíces',
+    id: 'crecimiento',
+    nombre: 'Crecimiento Vegetativo',
+    semanas: [3, 8],
+    descripcion: 'Desarrollo de tallos y hojas. Mayor demanda de nitrógeno.',
     fertilizacion: {
-      productos: ['Deeper Underground'],
-      dosis: [1],
-      notas: 'Fertilizante de raíces, 1 ml/L'
+      productos: ['Compost', 'Purín de Ortiga'],
+      dosis: [100, 20], // gr o ml
+      notas: 'Aplicar compost en superficie o purín diluido'
     },
     riego: {
-      maceta: { min: 0.15, max: 0.3 },
-      suelo: { min: 0.3, max: 0.5 }
+      maceta: { min: 0.5, max: 1.0 },
+      suelo: { min: 1.0, max: 2.0 }
     }
   },
   {
-    id: 'fase2',
-    nombre: 'Crecimiento Vegetativo Temprano',
-    semanas: [4, 5], // Semanas 4-5 (2025-10-06 → 2025-10-19)
-    descripcion: 'Desarrollo de hojas y estructura',
+    id: 'floracion',
+    nombre: 'Floración y Cuajado',
+    semanas: [9, 14],
+    descripcion: 'Aparición de flores y primeros frutos. Demanda de potasio.',
     fertilizacion: {
-      productos: ['Deeper Underground', 'Top Veg'],
-      dosis: [1.5, 2],
-      notas: 'Combinación de raíces y crecimiento vegetativo'
+      productos: ['Té de Banana', 'Humus'],
+      dosis: [50, 100],
+      notas: 'Reforzar potasio para la floración'
     },
     riego: {
-      maceta: { min: 0.5, max: 1 },
-      suelo: { min: 1, max: 2 }
+      maceta: { min: 1.5, max: 2.5 },
+      suelo: { min: 2.0, max: 3.0 }
     }
   },
   {
-    id: 'fase3',
-    nombre: 'Crecimiento Vegetativo Intenso',
-    semanas: [6, 11], // Semanas 6-11 (2025-10-20 → 2025-11-30)
-    descripcion: 'Máximo crecimiento vegetativo, posible trasplante',
+    id: 'fructificacion',
+    nombre: 'Desarrollo de Fruto',
+    semanas: [15, 22],
+    descripcion: 'Engorde y maduración de frutos.',
     fertilizacion: {
-      productos: ['Top Veg'],
-      dosis: [2.5],
-      notas: 'Solo Top Veg. Deeper Underground solo si hay trasplante'
+      productos: ['Compost', 'Ceniza de madera'],
+      dosis: [100, 10],
+      notas: 'Mantener nutrición equilibrada'
     },
     riego: {
-      maceta: { min: 1, max: 2.5 },
-      suelo: { min: 3, max: 4 }
+      maceta: { min: 2.0, max: 3.0 },
+      suelo: { min: 3.0, max: 4.0 }
     }
   },
   {
-    id: 'fase4',
-    nombre: 'Pre-floración',
-    semanas: [12, 17], // Semanas 12-17 (2025-12-01 → 2026-01-05)
-    descripcion: 'Preparación para floración, desarrollo de estructura',
-    fertilizacion: {
-      productos: ['Top Veg'],
-      dosis: [3.5],
-      notas: 'Máxima dosis de crecimiento vegetativo'
-    },
-    riego: {
-      maceta: { min: 2.5, max: 4 },
-      suelo: { min: 4, max: 6 }
-    }
-  },
-  {
-    id: 'fase5',
-    nombre: 'Transición a Floración',
-    semanas: [18, 19], // Semanas 18-19 (2026-01-06 → 2026-01-19)
-    descripcion: 'Aparición de preflores, inicio de floración',
-    fertilizacion: {
-      productos: ['Top Veg', 'Top Bloom'],
-      dosis: [2.5, 2],
-      notas: 'Transición gradual a fertilizantes de floración'
-    },
-    riego: {
-      maceta: { min: 3, max: 5 },
-      suelo: { min: 5, max: 7 }
-    }
-  },
-  {
-    id: 'fase6',
-    nombre: 'Floración Intensa',
-    semanas: [20, 25], // Semanas 20-25 (2026-01-20 → 2026-02-23)
-    descripcion: 'Desarrollo de flores y engorde de cogollos',
-    fertilizacion: {
-      productos: ['Top Bloom'],
-      dosis: [3.5],
-      notas: 'Solo fertilizantes de floración'
-    },
-    riego: {
-      maceta: { min: 4, max: 6 },
-      suelo: { min: 7, max: 10 }
-    }
-  },
-  {
-    id: 'lavado-cosecha',
-    nombre: 'Lavado y Cosecha',
-    semanas: [26, 30], // Semanas 26-30 (2026-02-24 → 2026-03-30)
-    descripcion: 'Lavado de raíces y ventana de cosecha',
+    id: 'cosecha',
+    nombre: 'Cosecha Continua',
+    semanas: [23, 30],
+    descripcion: 'Recolección de frutos maduros.',
     fertilizacion: {
       productos: [],
       dosis: [],
-      notas: 'Solo agua de la llave para lavado'
+      notas: 'Reducir fertilización, mantener humedad constante'
     },
     riego: {
-      maceta: { min: 2, max: 4 },
-      suelo: { min: 3, max: 5 }
+      maceta: { min: 1.5, max: 2.5 },
+      suelo: { min: 2.5, max: 3.5 }
     }
   }
 ];
 
-// Fechas de lavado específicas por variedad
-export const FECHAS_LAVADO = {
-  'cream-mandarine': {
-    lavado: new Date('2026-02-17'),
-    cosecha: { inicio: new Date('2026-02-24'), fin: new Date('2026-03-10') }
-  },
-  'fresh-candy': {
-    lavado: new Date('2026-02-23'),
-    cosecha: { inicio: new Date('2026-03-02'), fin: new Date('2026-03-16') }
-  }
-};
-
 // Tipos de eventos
-export type TipoEvento = 'fertilizacion' | 'riego' | 'lavado' | 'cosecha';
+export type TipoEvento = 'fertilizacion' | 'riego' | 'cosecha' | 'poda';
 
 export interface Evento {
   id: string;
@@ -216,21 +159,10 @@ export function generarEventosSemana(fechaInicioSemana: Date, semana: number): E
   // Determinar fase actual
   const fase = FASES.find(f => 
     semana >= f.semanas[0] && semana <= f.semanas[1]
-  ) || FASES[0];
-
-  // Verificar si estamos en período de lavado
-  const esLavadoCreamMandarine = isWithinInterval(fechaJueves, {
-    start: FECHAS_LAVADO['cream-mandarine'].lavado,
-    end: FECHAS_LAVADO['cream-mandarine'].cosecha.inicio
-  });
-
-  const esLavadoFreshCandy = isWithinInterval(fechaJueves, {
-    start: FECHAS_LAVADO['fresh-candy'].lavado,
-    end: FECHAS_LAVADO['fresh-candy'].cosecha.inicio
-  });
+  ) || FASES[FASES.length - 1];
 
   // Evento de fertilización (jueves)
-  if (fase.fertilizacion.productos.length > 0 && !esLavadoCreamMandarine && !esLavadoFreshCandy) {
+  if (fase.fertilizacion.productos.length > 0) {
     eventos.push({
       id: `fert-${semana}-${fechaJueves.getTime()}`,
       tipo: 'fertilizacion',
@@ -241,23 +173,6 @@ export function generarEventosSemana(fechaInicioSemana: Date, semana: number): E
       plantas: PLANTAS.map(p => p.id),
       notas: fase.fertilizacion.notas,
       fase: fase.nombre
-    });
-  } else if (esLavadoCreamMandarine || esLavadoFreshCandy) {
-    // Evento de lavado
-    const plantasLavado = esLavadoCreamMandarine 
-      ? PLANTAS.filter(p => p.nombre.includes('Cream Mandarine')).map(p => p.id)
-      : PLANTAS.filter(p => p.nombre.includes('Fresh Candy')).map(p => p.id);
-
-    eventos.push({
-      id: `lavado-${semana}-${fechaJueves.getTime()}`,
-      tipo: 'lavado',
-      fecha: fechaJueves,
-      productos: [],
-      dosis: [],
-      litrosPorPlanta: fase.riego,
-      plantas: plantasLavado,
-      notas: 'Lavado de raíces - solo agua de la llave',
-      fase: 'Lavado'
     });
   }
 
@@ -271,10 +186,25 @@ export function generarEventosSemana(fechaInicioSemana: Date, semana: number): E
       dosis: [],
       litrosPorPlanta: fase.riego,
       plantas: PLANTAS.map(p => p.id),
-      notas: 'Riego con agua de la llave',
+      notas: 'Riego regular. Verificar humedad del sustrato.',
       fase: fase.nombre
     });
   });
+
+  // Evento de cosecha (si estamos en fase de cosecha)
+  if (fase.id === 'cosecha') {
+     eventos.push({
+      id: `cosecha-${semana}-${fechaSabado.getTime()}`,
+      tipo: 'cosecha',
+      fecha: fechaSabado,
+      productos: [],
+      dosis: [],
+      litrosPorPlanta: fase.riego,
+      plantas: PLANTAS.map(p => p.id),
+      notas: 'Recolección de frutos maduros',
+      fase: fase.nombre
+    });
+  }
 
   return eventos;
 }
@@ -329,3 +259,4 @@ export function formatearFecha(fecha: Date): string {
 export function formatearRangoSemana(fechaInicio: Date, fechaFin: Date): string {
   return `${format(fechaInicio, 'dd MMM', { locale: es })} - ${format(fechaFin, 'dd MMM yyyy', { locale: es })}`;
 }
+

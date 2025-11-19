@@ -1,18 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
-import { 
-  generarTodasLasSemanas, 
+import {
+  generarTodasLasSemanas,
+  obtenerProximoFertilizante,
   formatearRangoSemana,
   PLANTAS,
-  type Evento 
+  type Evento
 } from './schedule';
-import { generarSemanasTopCrop } from './topcrop';
-import tablaTopCrop from './img/Tabla-de-cultivo-768x549.jpg';
 import { format, isToday, isSameWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useLayoutEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { fetchWeatherData, buildWeatherAdvice, type WeatherData } from './weather';
 
 // Componente de filtros
 interface FiltrosProps {
@@ -21,54 +16,43 @@ interface FiltrosProps {
 }
 
 function Filtros({ filtroPlanta, onFiltroChange }: FiltrosProps) {
+  const opciones = [
+    { id: 'todas', label: 'Todas', icon: '🌱' },
+    { id: 'tomate-cherry', label: 'Tomate Cherry', icon: '🍅' },
+    { id: 'tomate-raf', label: 'Tomate Raf', icon: '🍅' },
+    { id: 'albahaca', label: 'Albahaca', icon: '🌿' },
+    { id: 'pimiento', label: 'Pimiento', icon: '🫑' },
+    { id: 'lechuga', label: 'Lechuga', icon: '🥬' },
+  ];
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Filtros</h3>
-      <div className="space-y-2">
-        <label className="flex items-center">
-          <input
-            type="radio"
-            name="filtro-planta"
-            value="todas"
-            checked={filtroPlanta === 'todas'}
-            onChange={(e) => onFiltroChange(e.target.value)}
-            className="mr-2"
-          />
-          <span className="text-sm">Todas las plantas</span>
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            name="filtro-planta"
-            value="fresh-candy-suelo"
-            checked={filtroPlanta === 'fresh-candy-suelo'}
-            onChange={(e) => onFiltroChange(e.target.value)}
-            className="mr-2"
-          />
-          <span className="text-sm">Fresh Candy (suelo)</span>
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            name="filtro-planta"
-            value="cream-mandarine-suelo"
-            checked={filtroPlanta === 'cream-mandarine-suelo'}
-            onChange={(e) => onFiltroChange(e.target.value)}
-            className="mr-2"
-          />
-          <span className="text-sm">Cream Mandarine (suelo)</span>
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            name="filtro-planta"
-            value="cream-mandarine-maceta"
-            checked={filtroPlanta === 'cream-mandarine-maceta'}
-            onChange={(e) => onFiltroChange(e.target.value)}
-            className="mr-2"
-          />
-          <span className="text-sm">Cream Mandarine (macetas)</span>
-        </label>
+    <div className="card">
+      <h3 className="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">
+        <span>🔍</span> Filtros de Cultivo
+      </h3>
+      <div className="grid grid-cols-2 gap-2">
+        {opciones.map((opcion) => (
+          <label
+            key={opcion.id}
+            className={`
+              flex items-center p-2 rounded-lg cursor-pointer transition-all duration-200 border
+              ${filtroPlanta === opcion.id
+                ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-sm'
+                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-emerald-200'}
+            `}
+          >
+            <input
+              type="radio"
+              name="filtro-planta"
+              value={opcion.id}
+              checked={filtroPlanta === opcion.id}
+              onChange={(e) => onFiltroChange(e.target.value)}
+              className="hidden"
+            />
+            <span className="mr-2 text-xl">{opcion.icon}</span>
+            <span className="text-sm font-medium">{opcion.label}</span>
+          </label>
+        ))}
       </div>
     </div>
   );
@@ -87,7 +71,6 @@ function EventoCard({ evento, esHoy, esProximo, onSeleccionar }: EventoCardProps
     switch (tipo) {
       case 'fertilizacion': return 'badge badge-fertilizacion';
       case 'riego': return 'badge badge-riego';
-      case 'lavado': return 'badge badge-lavado';
       case 'cosecha': return 'badge badge-cosecha';
       default: return 'badge bg-gray-100 text-gray-800';
     }
@@ -97,18 +80,15 @@ function EventoCard({ evento, esHoy, esProximo, onSeleccionar }: EventoCardProps
     switch (tipo) {
       case 'fertilizacion': return 'Fertilización';
       case 'riego': return 'Riego';
-      case 'lavado': return 'Lavado';
       case 'cosecha': return 'Cosecha';
       default: return tipo;
     }
   };
 
   return (
-    <div 
-      data-anim="evento"
-      className={`card card-hover cursor-pointer ${
-        esHoy ? 'semaforo-hoy' : esProximo ? 'semaforo-proximo' : ''
-      }`}
+    <div
+      className={`card card-hover cursor-pointer ${esHoy ? 'semaforo-hoy' : esProximo ? 'semaforo-proximo' : ''
+        }`}
       onClick={() => onSeleccionar(evento)}
     >
       <div className="flex items-center justify-between mb-2">
@@ -119,7 +99,7 @@ function EventoCard({ evento, esHoy, esProximo, onSeleccionar }: EventoCardProps
           {format(evento.fecha, 'HH:mm', { locale: es })}
         </span>
       </div>
-      
+
       <div className="space-y-1">
         {evento.productos.length > 0 && (
           <div className="text-sm">
@@ -132,13 +112,13 @@ function EventoCard({ evento, esHoy, esProximo, onSeleccionar }: EventoCardProps
             ))}
           </div>
         )}
-        
+
         <div className="text-sm text-gray-600">
           <span className="font-medium">Litros: </span>
-          Maceta: {evento.litrosPorPlanta.maceta.min}-{evento.litrosPorPlanta.maceta.max}L | 
+          Maceta: {evento.litrosPorPlanta.maceta.min}-{evento.litrosPorPlanta.maceta.max}L |
           Suelo: {evento.litrosPorPlanta.suelo.min}-{evento.litrosPorPlanta.suelo.max}L
         </div>
-        
+
         {evento.notas && (
           <div className="text-xs text-gray-500 italic">
             {evento.notas}
@@ -166,28 +146,22 @@ function SemanaCard({ semana, filtroPlanta, proximoFertilizante, onSeleccionarEv
   // Verificar si la fecha actual está dentro del rango de la semana
   const esHoy = (fechaActual >= semana.fechaInicio && fechaActual <= semana.fechaFin) ||
     isToday(semana.fechaInicio) || isToday(semana.fechaFin);
-  
-  const esProximo = Boolean(proximoFertilizante && 
+
+  const esProximo = Boolean(proximoFertilizante &&
     isSameWeek(proximoFertilizante.fecha, semana.fechaInicio, { weekStartsOn: 1 }));
 
   // Filtrar eventos según el filtro de planta
   const eventosFiltrados = useMemo(() => {
     if (filtroPlanta === 'todas') return semana.eventos;
-    
+
     return semana.eventos.filter(evento => {
-      if (filtroPlanta === 'fresh-candy-suelo') {
-        return evento.plantas.includes('fresh-candy-suelo');
-      } else if (filtroPlanta === 'cream-mandarine-suelo') {
-        return evento.plantas.includes('cream-mandarine-suelo');
-      } else if (filtroPlanta === 'cream-mandarine-maceta') {
-        return evento.plantas.some(id => id.includes('maceta'));
-      }
-      return true;
+      if (filtroPlanta === 'todas') return true;
+      return evento.plantas.includes(filtroPlanta);
     });
   }, [semana.eventos, filtroPlanta]);
 
   return (
-    <div data-anim="semana" className={`card ${esHoy ? 'semaforo-hoy' : esProximo ? 'semaforo-proximo' : ''}`}>
+    <div className={`card ${esHoy ? 'semaforo-hoy' : esProximo ? 'semaforo-proximo' : ''}`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
           Semana {semana.semana + 1}
@@ -196,19 +170,19 @@ function SemanaCard({ semana, filtroPlanta, proximoFertilizante, onSeleccionarEv
           {formatearRangoSemana(semana.fechaInicio, semana.fechaFin)}
         </div>
       </div>
-      
+
       {esHoy && (
         <div className="bg-cultivo-100 text-cultivo-800 px-3 py-2 rounded-lg mb-4 text-sm font-medium">
           🚦 HOY
         </div>
       )}
-      
+
       {esProximo && !esHoy && (
         <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded-lg mb-4 text-sm font-medium">
           ⏰ Próximo fertilizante
         </div>
       )}
-      
+
       <div className="space-y-3">
         {eventosFiltrados.length > 0 ? (
           eventosFiltrados.map((evento) => (
@@ -254,18 +228,18 @@ function DetallesPanel({ evento, onCerrar }: DetallesPanelProps) {
               ×
             </button>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <h3 className="font-medium text-gray-900 mb-2">Descripción</h3>
               <p className="text-gray-600">{evento.notas}</p>
             </div>
-            
+
             <div>
               <h3 className="font-medium text-gray-900 mb-2">Fase del cultivo</h3>
               <p className="text-gray-600">{evento.fase}</p>
             </div>
-            
+
             <div>
               <h3 className="font-medium text-gray-900 mb-3">Dosis por planta</h3>
               <div className="overflow-x-auto">
@@ -282,9 +256,6 @@ function DetallesPanel({ evento, onCerrar }: DetallesPanelProps) {
                         Litros sugeridos
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        pH suelo
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Dosis ml/L
                       </th>
                     </tr>
@@ -299,13 +270,10 @@ function DetallesPanel({ evento, onCerrar }: DetallesPanelProps) {
                           {planta.tipo}
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-600">
-                          {planta.tipo === 'maceta' 
+                          {planta.tipo === 'maceta'
                             ? `${evento.litrosPorPlanta.maceta.min}-${evento.litrosPorPlanta.maceta.max}L`
                             : `${evento.litrosPorPlanta.suelo.min}-${evento.litrosPorPlanta.suelo.max}L`
                           }
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-600">
-                          {'phSuelo' in planta ? `${(planta as any).phSuelo.min}-${(planta as any).phSuelo.max}` : '—'}
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-600">
                           {evento.productos.length > 0 ? (
@@ -347,17 +315,18 @@ interface Recordatorio {
 }
 
 // Función para generar recordatorios de cultivo
-function generarRecordatorios(fechaActual: Date, semanas: { fechaInicio: Date; fechaFin: Date; semana: number; eventos: Evento[] }[]): Recordatorio[] {
+function generarRecordatorios(fechaActual: Date): Recordatorio[] {
+  const semanas = generarTodasLasSemanas();
   const recordatorios: Recordatorio[] = [];
-  
+
   // Encontrar la semana actual
-  const semanaActual = semanas.find(semana => 
+  const semanaActual = semanas.find(semana =>
     (fechaActual >= semana.fechaInicio && fechaActual <= semana.fechaFin) ||
     isToday(semana.fechaInicio) || isToday(semana.fechaFin)
   );
-  
+
   if (!semanaActual) return recordatorios;
-  
+
   // Recordatorios de cambio de fase
   const faseActual = semanaActual.eventos[0]?.fase || 'Germinación';
   recordatorios.push({
@@ -365,12 +334,12 @@ function generarRecordatorios(fechaActual: Date, semanas: { fechaInicio: Date; f
     mensaje: `🌿 CAMBIO DE FASE DETECTADO\n\nFase actual: ${faseActual}\nSemana ${semanaActual.semana + 1}\n\n📅 Rango: ${formatearRangoSemana(semanaActual.fechaInicio, semanaActual.fechaFin)}\n\n⚠️ IMPORTANTE: Ajusta el cuidado según la nueva fase`,
     urgencia: 'media'
   });
-  
+
   // Recordatorios de fertilización
   const eventosFertilizacion = semanaActual.eventos.filter(e => e.tipo === 'fertilizacion');
   eventosFertilizacion.forEach(evento => {
     const diasRestantes = Math.ceil((evento.fecha.getTime() - fechaActual.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diasRestantes === 0) {
       recordatorios.push({
         tipo: 'fertilizacion-hoy',
@@ -385,12 +354,12 @@ function generarRecordatorios(fechaActual: Date, semanas: { fechaInicio: Date; f
       });
     }
   });
-  
+
   // Recordatorios de riego (evitar sobre-riego)
   const eventosRiego = semanaActual.eventos.filter(e => e.tipo === 'riego');
   eventosRiego.forEach(evento => {
     const diasRestantes = Math.ceil((evento.fecha.getTime() - fechaActual.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diasRestantes === 0) {
       recordatorios.push({
         tipo: 'fertilizacion-hoy',
@@ -399,29 +368,29 @@ function generarRecordatorios(fechaActual: Date, semanas: { fechaInicio: Date; f
       });
     }
   });
-  
-  // Recordatorios de trasplante
-  const semanaTrasplante = semanas.find(semana => semana.semana === 5); // Semana 6 (índice 5)
-  if (semanaTrasplante && fechaActual >= semanaTrasplante.fechaInicio && fechaActual <= semanaTrasplante.fechaFin) {
-    recordatorios.push({
-      tipo: 'trasplante',
-      mensaje: `🌿 MOMENTO IDEAL DE TRASPLANTE\n\nSemana 6 - Crecimiento Vegetativo Intenso\n\n📋 Instrucciones:\n• Fresh Candy: Trasplantar a suelo directo\n• Cream Mandarine #1: Trasplantar a suelo directo\n• Cream Mandarine #2-4: Trasplantar a macetas definitivas (más grandes)\n\n💡 Consejos:\n• Hacerlo en horas de menor calor\n• Regar bien después del trasplante\n• Usar sustrato de buena calidad`,
-      urgencia: 'media'
-    });
-  }
-  
+
+  // Recordatorios de trasplante (eliminado o adaptado)
+  // const semanaTrasplante = semanas.find(semana => semana.semana === 5); 
+  // if (semanaTrasplante && fechaActual >= semanaTrasplante.fechaInicio && fechaActual <= semanaTrasplante.fechaFin) {
+  //   recordatorios.push({
+  //     tipo: 'trasplante',
+  //     mensaje: `🌿 SUGERENCIA DE TRASPLANTE\n\nSi tienes plantas en macetas pequeñas, considera trasplantar.`,
+  //     urgencia: 'media'
+  //   });
+  // }
+
   return recordatorios;
 }
 
 // Componente de notificaciones WhatsApp
-function NotificacionesWhatsApp({ fechaActual, semanas }: { fechaActual: Date; semanas: { fechaInicio: Date; fechaFin: Date; semana: number; eventos: Evento[] }[] }) {
-  const recordatorios = useMemo(() => generarRecordatorios(fechaActual, semanas), [fechaActual, semanas]);
-  
+function NotificacionesWhatsApp({ fechaActual }: { fechaActual: Date }) {
+  const recordatorios = useMemo(() => generarRecordatorios(fechaActual), [fechaActual]);
+
   const handleProbarWhatsApp = () => {
-    const mensajePrueba = `🧪 PRUEBA DE NOTIFICACIONES\n\n📱 Calendario de Cultivo - Santiago de Chile\n\n✅ Sistema funcionando correctamente\n📅 Fecha: ${format(fechaActual, 'dd/MM/yyyy HH:mm', { locale: es })}\n\n🌱 Tu cultivo está siendo monitoreado automáticamente\n\n📞 Número configurado: +56937244264`;
+    const mensajePrueba = `🧪 PRUEBA DE NOTIFICACIONES\n\n📱 Huerto Urbano - Santiago de Chile\n\n✅ Sistema funcionando correctamente\n📅 Fecha: ${format(fechaActual, 'dd/MM/yyyy HH:mm', { locale: es })}\n\n🌱 Tu huerto está siendo monitoreado automáticamente\n\n📞 Número configurado: +56937244264`;
     enviarWhatsApp(mensajePrueba);
   };
-  
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
       <div className="flex items-center justify-between mb-3">
@@ -433,7 +402,7 @@ function NotificacionesWhatsApp({ fechaActual, semanas }: { fechaActual: Date; s
           🧪 Probar
         </button>
       </div>
-      
+
       <div className="bg-green-50 border border-green-200 rounded-lg p-2 mb-3">
         <div className="flex items-center">
           <span className="text-green-600 text-sm">✅</span>
@@ -442,7 +411,7 @@ function NotificacionesWhatsApp({ fechaActual, semanas }: { fechaActual: Date; s
           </p>
         </div>
       </div>
-      
+
       {recordatorios.length === 0 ? (
         <div className="text-center text-gray-500 py-2">
           <p className="text-xs">No hay notificaciones activas hoy</p>
@@ -452,19 +421,18 @@ function NotificacionesWhatsApp({ fechaActual, semanas }: { fechaActual: Date; s
         <div className="space-y-2">
           <p className="text-xs text-gray-600 mb-2">Alertas que se enviarán automáticamente:</p>
           {recordatorios.map((recordatorio, index) => (
-            <div key={index} className={`p-2 rounded-lg border ${
-              recordatorio.urgencia === 'alta' 
-                ? 'bg-red-50 border-red-200' 
-                : 'bg-yellow-50 border-yellow-200'
-            }`}>
+            <div key={index} className={`p-2 rounded-lg border ${recordatorio.urgencia === 'alta'
+              ? 'bg-red-50 border-red-200'
+              : 'bg-yellow-50 border-yellow-200'
+              }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <span className="text-xs font-medium">
                     {recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('CAMBIO DE FASE') ? '🌿 Cambio de Fase' :
-                     recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Fertilización') ? '🌱 Fertilización HOY' :
-                     recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Riego') ? '💧 Riego HOY' :
-                     recordatorio.tipo === 'fertilizacion-manana' ? '🌱 Fertilización MAÑANA' :
-                     '🌿 Trasplante'}
+                      recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Fertilización') ? '🌱 Fertilización HOY' :
+                        recordatorio.tipo === 'fertilizacion-hoy' && recordatorio.mensaje.includes('HOY: Riego') ? '💧 Riego HOY' :
+                          recordatorio.tipo === 'fertilizacion-manana' ? '🌱 Fertilización MAÑANA' :
+                            '🌿 Trasplante'}
                   </span>
                   <span className="text-xs text-gray-500 ml-2">
                     {recordatorio.urgencia === 'alta' ? '(Urgente)' : '(Recordatorio)'}
@@ -481,21 +449,22 @@ function NotificacionesWhatsApp({ fechaActual, semanas }: { fechaActual: Date; s
 }
 
 // Componente de reloj
-function Reloj({ fechaActual, semanas }: { fechaActual: Date; semanas: { fechaInicio: Date; fechaFin: Date; semana: number; eventos: Evento[] }[] }) {
-  
+function Reloj({ fechaActual }: { fechaActual: Date }) {
+  const semanas = generarTodasLasSemanas();
+
   // Obtener próximo fertilizante usando la fecha actual del estado
   const proximoFertilizante = useMemo(() => {
     for (const semana of semanas) {
-      const proximo = semana.eventos.find(e => 
+      const proximo = semana.eventos.find(e =>
         e.tipo === 'fertilizacion' && e.fecha >= fechaActual
       );
       if (proximo) return proximo;
     }
     return null;
   }, [semanas, fechaActual]);
-  
+
   // Encontrar la semana actual
-  const semanaActual = semanas.find(semana => 
+  const semanaActual = semanas.find(semana =>
     (fechaActual >= semana.fechaInicio && fechaActual <= semana.fechaFin) ||
     isToday(semana.fechaInicio) || isToday(semana.fechaFin)
   );
@@ -517,7 +486,7 @@ function Reloj({ fechaActual, semanas }: { fechaActual: Date; semanas: { fechaIn
             </p>
           </div>
         </div>
-        
+
         {semanaActual && (
           <div className="bg-cultivo-50 border border-cultivo-200 rounded-lg p-2">
             <div className="flex items-center justify-between">
@@ -544,10 +513,7 @@ function App() {
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null);
   const [fechaActual, setFechaActual] = useState(new Date());
   const [alertasEnviadas, setAlertasEnviadas] = useState<Set<string>>(new Set());
-  const [tipoCalendario, setTipoCalendario] = useState<'personalizado' | 'topcrop'>('personalizado');
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  
+
   // Actualizar fecha cada minuto
   useEffect(() => {
     const timer = setInterval(() => {
@@ -559,12 +525,12 @@ function App() {
 
   // Sistema de alertas automáticas
   useEffect(() => {
-    const recordatorios = generarRecordatorios(fechaActual, semanasMemo);
+    const recordatorios = generarRecordatorios(fechaActual);
     const hoy = format(fechaActual, 'yyyy-MM-dd', { locale: es });
-    
+
     recordatorios.forEach(recordatorio => {
       const claveAlerta = `${hoy}-${recordatorio.tipo}`;
-      
+
       // Solo enviar si no se ha enviado hoy
       if (!alertasEnviadas.has(claveAlerta)) {
         // Enviar automáticamente TODAS las alertas
@@ -578,12 +544,12 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       const ahora = new Date();
-      const recordatorios = generarRecordatorios(ahora, semanasMemo);
+      const recordatorios = generarRecordatorios(ahora);
       const hoy = format(ahora, 'yyyy-MM-dd', { locale: es });
-      
+
       recordatorios.forEach(recordatorio => {
         const claveAlerta = `${hoy}-${recordatorio.tipo}-${ahora.getHours()}`;
-        
+
         // Solo enviar si no se ha enviado en esta hora
         if (!alertasEnviadas.has(claveAlerta)) {
           enviarWhatsApp(recordatorio.mensaje);
@@ -595,67 +561,27 @@ function App() {
     return () => clearInterval(interval);
   }, [alertasEnviadas]);
 
-  // Clima: obtener al cargar y refrescar cada 6h
-  useEffect(() => {
-    let cancel = false;
-    const load = async () => {
-      try {
-        const data = await fetchWeatherData();
-        if (!cancel) setWeather(data);
-      } catch {}
-    };
-    load();
-    const t = setInterval(load, 6 * 60 * 60 * 1000);
-    return () => { cancel = true; clearInterval(t); };
-  }, []);
-  
-  const semanasMemo = useMemo(() => {
-    if (tipoCalendario === 'personalizado') {
-      return generarTodasLasSemanas();
-    }
-    return generarSemanasTopCrop().map(sem => ({
-      fechaInicio: sem.fechaInicio,
-      fechaFin: sem.fechaFin,
-      semana: sem.semana,
-      eventos: sem.eventos.map(ev => ({
-        id: ev.id,
-        tipo: ev.tipo as Evento['tipo'],
-        fecha: ev.fecha,
-        productos: ev.productos,
-        dosis: ev.dosis,
-        litrosPorPlanta: ev.litrosPorPlanta,
-        plantas: PLANTAS.map(p => p.id),
-        notas: ev.notas,
-        fase: ev.fase
-      }))
-    }));
-  }, [tipoCalendario]);
-
-  const proximoFertilizante = useMemo(() => {
-    for (const semana of semanasMemo) {
-      const proximo = semana.eventos.find(e => e.tipo === 'fertilizacion' && e.fecha >= fechaActual);
-      if (proximo) return proximo;
-    }
-    return null;
-  }, [semanasMemo, fechaActual]);
+  const semanas = generarTodasLasSemanas();
+  const proximoFertilizante = obtenerProximoFertilizante();
 
   const handleImprimir = () => {
     window.print();
   };
 
   const handleEnviarResumenWhatsApp = () => {
-    const semanaActual = semanasMemo.find(semana => 
+    const semanas = generarTodasLasSemanas();
+    const semanaActual = semanas.find(semana =>
       (fechaActual >= semana.fechaInicio && fechaActual <= semana.fechaFin) ||
       isToday(semana.fechaInicio) || isToday(semana.fechaFin)
     );
-    
+
     if (!semanaActual) return;
-    
+
     const proximoFertilizante = semanaActual.eventos.find(e => e.tipo === 'fertilizacion');
-    
+
     let mensaje = `🌱 RESUMEN CULTIVO - ${format(fechaActual, 'dd/MM/yyyy', { locale: es })}\n\n`;
     mensaje += `📅 Semana ${semanaActual.semana + 1}: ${formatearRangoSemana(semanaActual.fechaInicio, semanaActual.fechaFin)}\n\n`;
-    
+
     if (proximoFertilizante) {
       mensaje += `🌱 Próximo fertilizante: ${format(proximoFertilizante.fecha, 'dd/MM', { locale: es })}\n`;
       mensaje += `Productos: ${proximoFertilizante.productos.join(', ')}\n`;
@@ -663,237 +589,108 @@ function App() {
     } else {
       mensaje += `💧 Solo riegos de agua de la llave\n\n`;
     }
-    
+
     mensaje += `📋 Plantas:\n`;
     PLANTAS.forEach(planta => {
       mensaje += `• ${planta.nombre} (${planta.tipo})\n`;
     });
-    
+
     mensaje += `\n🌿 Fase: ${semanaActual.eventos[0]?.fase || 'Germinación'}`;
-    
+
     enviarWhatsApp(mensaje);
   };
 
-  useLayoutEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    if (!rootRef.current) return;
-
-    const listeners: Array<() => void> = [];
-
-    const ctx = gsap.context(() => {
-      gsap.from('[data-anim="header"]', { y: -20, opacity: 0, duration: 0.6, ease: 'power2.out' });
-      gsap.from('[data-anim="header-actions"] > *', { y: -10, opacity: 0, duration: 0.5, stagger: 0.1, delay: 0.2, ease: 'power2.out' });
-
-      gsap.from('[data-anim="sidebar"] > *', { x: -20, opacity: 0, duration: 0.5, stagger: 0.1, ease: 'power2.out' });
-
-      gsap.utils.toArray<HTMLElement>('[data-anim="semana"]').forEach((el, i) => {
-        gsap.from(el, {
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 85%'
-          },
-          y: 20,
-          opacity: 0,
-          duration: 0.5,
-          ease: 'power2.out',
-          delay: Math.min(i * 0.03, 0.3)
-        });
-      });
-
-      gsap.utils.toArray<HTMLElement>('[data-anim="evento"]').forEach((el) => {
-        gsap.from(el, {
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 90%'
-          },
-          y: 10,
-          opacity: 0,
-          duration: 0.4,
-          ease: 'power2.out'
-        });
-      });
-
-      // Microinteracciones dopaminérgicas en tarjetas (hover): sutil pop y elevación
-      const hoveredCards = gsap.utils.toArray<HTMLElement>('.card');
-      hoveredCards.forEach((card) => {
-        const onEnter = () => {
-          gsap.to(card, { duration: 0.2, y: -3, scale: 1.012, boxShadow: '0 12px 24px rgba(0,0,0,0.12)', ease: 'power2.out' });
-        };
-        const onLeave = () => {
-          gsap.to(card, { duration: 0.25, y: 0, scale: 1, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', ease: 'power2.out' });
-        };
-        card.addEventListener('mouseenter', onEnter);
-        card.addEventListener('mouseleave', onLeave);
-        listeners.push(() => {
-          card.removeEventListener('mouseenter', onEnter);
-          card.removeEventListener('mouseleave', onLeave);
-        });
-      });
-
-      // Parallax suave para la imagen Top Crop si existe
-      const topCropImg = document.querySelector<HTMLImageElement>('img[alt="Tabla de cultivo Top Crop"]');
-      if (topCropImg) {
-        gsap.fromTo(topCropImg, { yPercent: -2 }, {
-          yPercent: 2,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: topCropImg,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 0.5
-          }
-        });
-      }
-
-    }, rootRef);
-
-    return () => {
-      listeners.forEach((fn) => fn());
-      ctx.revert();
-    };
-  }, [tipoCalendario, filtroPlanta]);
-
   return (
-    <div className="min-h-screen bg-gray-50 relative overflow-x-hidden" ref={rootRef}>
-      {/* Parallax decorativo */}
-      <div className="parallax-layer z-0" style={{ backgroundImage: `linear-gradient(rgba(17,24,39,0.25), rgba(17,24,39,0.25)), url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1920&auto=format&fit=crop')`, opacity: 0.08 }} />
-      <div className="parallax-layer z-0" style={{ backgroundImage: `radial-gradient(transparent 45%, rgba(17,24,39,0.35)), url('https://images.unsplash.com/photo-1516542076529-1ea3854896e1?q=80&w=1920&auto=format&fit=crop')`, opacity: 0.06, transform: 'translateY(10vh)' }} />
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 relative z-10" data-anim="header">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Calendario de Cultivo
-              </h1>
-              <p className="text-sm text-gray-600">
-                Santiago de Chile • 5 plantas • 2025-09-04 → 2026-03-16
-              </p>
-            </div>
-            <div className="flex space-x-2" data-anim="header-actions">
-              <select
-                value={tipoCalendario}
-                onChange={(e) => setTipoCalendario(e.target.value as 'personalizado' | 'topcrop')}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                aria-label="Tipo de calendario"
-              >
-                <option value="personalizado">Personalizado</option>
-                <option value="topcrop">Top Crop</option>
-              </select>
-              <button
-                onClick={handleEnviarResumenWhatsApp}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-              >
-                📱 WhatsApp
-              </button>
-              <button
-                onClick={handleImprimir}
-                className="btn-primary"
-              >
-                📄 Imprimir/PDF
-              </button>
+    <>
+      {/* Nature Animated Background */}
+      <div className="animated-bg">
+        <div className="orb orb-1"></div> {/* Sun */}
+        <div className="orb orb-2"></div> {/* Foliage */}
+        <div className="orb orb-3"></div> {/* Foliage */}
+        <div className="orb orb-4"></div> {/* Water/Sky */}
+      </div>
+
+      <div className="min-h-screen relative z-10">
+        {/* Header */}
+        <header className="bg-white/90 backdrop-blur-md shadow-sm border-b border-emerald-100 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-100 p-2 rounded-full">
+                  <span className="text-2xl">🪴</span>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-emerald-900 tracking-tight">
+                    Huerto Urbano
+                  </h1>
+                  <p className="text-sm text-emerald-600 font-medium">
+                    Gestión Inteligente de Cultivos
+                  </p>
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleEnviarResumenWhatsApp}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-emerald-200 flex items-center gap-2"
+                >
+                  <span>📱</span> WhatsApp
+                </button>
+                <button
+                  onClick={handleImprimir}
+                  className="bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2"
+                >
+                  <span>📄</span> PDF
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <div className="lg:col-span-1 lg:sticky lg:top-4 self-start" data-anim="sidebar">
-            <Reloj fechaActual={fechaActual} semanas={semanasMemo} />
-            
-            <NotificacionesWhatsApp fechaActual={fechaActual} semanas={semanasMemo} />
-            
-            {/* Clima */}
-            <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Clima - Cerro Navia</h3>
-              {weather ? (
-                <div className="space-y-3">
-                  {weather.current && (
-                    <div className="text-sm text-gray-700">
-                      <div>Ahora: {Math.round(weather.current.temperature)}°C • Viento {Math.round(weather.current.windSpeed)} km/h</div>
-                      <div>Humedad: {Math.round(weather.current.relativeHumidity)}%</div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <Reloj fechaActual={fechaActual} />
+
+              <NotificacionesWhatsApp fechaActual={fechaActual} />
+
+              <Filtros
+                filtroPlanta={filtroPlanta}
+                onFiltroChange={setFiltroPlanta}
+              />
+
+              {/* Info de plantas */}
+              <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Plantas</h3>
+                <div className="space-y-2">
+                  {PLANTAS.map((planta) => (
+                    <div key={planta.id} className="text-sm">
+                      <div className="font-medium text-gray-900">{planta.nombre}</div>
+                      <div className="text-gray-600">{planta.tipo} • {planta.banco}</div>
                     </div>
-                  )}
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 text-xs">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-2 py-1 text-left text-gray-500">Día</th>
-                          <th className="px-2 py-1 text-left text-gray-500">Min/Max</th>
-                          <th className="px-2 py-1 text-left text-gray-500">Lluvia</th>
-                          <th className="px-2 py-1 text-left text-gray-500">Viento</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {weather.daily.slice(0,5).map((d, i) => (
-                          <tr key={i}>
-                            <td className="px-2 py-1 text-gray-700">{d.date.slice(5)}</td>
-                            <td className="px-2 py-1 text-gray-700">{Math.round(d.tempMin)}° / {Math.round(d.tempMax)}°</td>
-                            <td className="px-2 py-1 text-gray-700">{Math.round(d.precipitationProbMax)}% ({Math.round(d.precipitationSum)}mm)</td>
-                            <td className="px-2 py-1 text-gray-700">{Math.round(d.windMax)} km/h</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-xs text-yellow-800">
-                    {buildWeatherAdvice(weather.daily).map((m, i) => (
-                      <div key={i}>• {m}</div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              ) : (
-                <div className="text-sm text-gray-500">Cargando clima…</div>
-              )}
+              </div>
             </div>
-            
-            <Filtros 
-              filtroPlanta={filtroPlanta}
-              onFiltroChange={setFiltroPlanta}
-            />
-            
-            {/* Info de plantas */}
-            <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Plantas</h3>
-              <div className="space-y-2">
-                {PLANTAS.map((planta) => (
-                  <div key={planta.id} className="text-sm">
-                    <div className="font-medium text-gray-900">{planta.nombre}</div>
-                    <div className="text-gray-600">{planta.tipo} • {planta.banco}</div>
-                    {'phSuelo' in planta && (
-                      <div className="text-xs text-gray-500">pH suelo recomendado: {(planta as any).phSuelo.min}-{(planta as any).phSuelo.max}</div>
-                    )}
-                  </div>
+
+            {/* Contenido principal */}
+            <div className="lg:col-span-3">
+              <div className="space-y-6">
+                {semanas.map((semana) => (
+                  <SemanaCard
+                    key={semana.semana}
+                    semana={semana}
+                    filtroPlanta={filtroPlanta}
+                    proximoFertilizante={proximoFertilizante}
+                    onSeleccionarEvento={setEventoSeleccionado}
+                    fechaActual={fechaActual}
+                  />
                 ))}
               </div>
             </div>
           </div>
-
-          {/* Contenido principal */}
-          <div className="lg:col-span-3">
-            <div className="space-y-6">
-              {tipoCalendario === 'topcrop' && (
-                <div className="card">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Tabla Top Crop (referencia)</h3>
-                  <p className="text-sm text-gray-600 mb-3">Esta vista simula la tabla oficial de Top Crop.</p>
-                  <img src={tablaTopCrop} alt="Tabla de cultivo Top Crop" className="w-full h-auto rounded" />
-                </div>
-              )}
-              {semanasMemo.map((semana) => (
-                <SemanaCard
-                  key={semana.semana}
-                  semana={semana}
-                  filtroPlanta={filtroPlanta}
-                  proximoFertilizante={proximoFertilizante}
-                  onSeleccionarEvento={setEventoSeleccionado}
-                  fechaActual={fechaActual}
-                />
-              ))}
-            </div>
-          </div>
         </div>
+
       </div>
 
       {/* Panel de detalles */}
@@ -901,7 +698,7 @@ function App() {
         evento={eventoSeleccionado}
         onCerrar={() => setEventoSeleccionado(null)}
       />
-    </div>
+    </>
   );
 }
 

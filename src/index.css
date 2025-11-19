@@ -4,60 +4,206 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
   }
-  
+
   body {
-    @apply bg-gray-100 text-gray-900;
+    @apply text-gray-900;
+    /* Nature Gradient: Morning Sky to Garden */
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    position: relative;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+}
+
+/* Nature Background Animation */
+.animated-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #e6f7ff 0%, #f0fff4 100%);
+  /* Sky to Garden */
+}
+
+/* Floating Elements (Sun, Leaves, Water) */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.6;
+  animation: floatNature 25s ease-in-out infinite;
+}
+
+/* The Sun */
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #fcd34d 0%, #fbbf24 100%);
+  /* Amber/Yellow */
+  top: -5%;
+  right: -5%;
+  opacity: 0.4;
+  animation-duration: 30s;
+}
+
+/* Foliage 1 */
+.orb-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #86efac 0%, #22c55e 100%);
+  /* Green */
+  bottom: -10%;
+  left: -10%;
+  opacity: 0.3;
+  animation-delay: -5s;
+}
+
+/* Foliage 2 */
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, #6ee7b7 0%, #10b981 100%);
+  /* Emerald */
+  top: 40%;
+  right: 10%;
+  opacity: 0.2;
+  animation-delay: -10s;
+}
+
+/* Water/Sky */
+.orb-4 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #bae6fd 0%, #38bdf8 100%);
+  /* Sky Blue */
+  top: 20%;
+  left: 20%;
+  opacity: 0.3;
+  animation-delay: -15s;
+}
+
+@keyframes floatNature {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -20px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4;
+    @apply rounded-2xl p-5 border;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
   }
-  .parallax-layer {
-    @apply pointer-events-none fixed inset-0 bg-no-repeat bg-cover opacity-20;
-    background-attachment: fixed;
-  }
-  
+
   .card-hover {
-    @apply hover:shadow-md transition-shadow duration-200;
+    @apply cursor-pointer;
   }
-  
+
+  .card-hover:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    border-color: #86efac;
+    /* Light green border on hover */
+  }
+
   .btn-primary {
-    @apply bg-cultivo-600 hover:bg-cultivo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2;
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    /* Green Gradient */
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.3);
   }
-  
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(22, 163, 74, 0.4);
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+  }
+
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300;
+    background: white;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
   }
-  
+
+  .btn-secondary:hover {
+    background: #f0fdf4;
+    border-color: #15803d;
+  }
+
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide;
   }
-  
+
   .badge-fertilizacion {
-    @apply bg-green-100 text-green-800;
+    @apply bg-emerald-100 text-emerald-800 border border-emerald-200;
   }
-  
+
   .badge-riego {
-    @apply bg-blue-100 text-blue-800;
+    @apply bg-sky-100 text-sky-800 border border-sky-200;
   }
-  
+
   .badge-lavado {
-    @apply bg-orange-100 text-orange-800;
+    @apply bg-amber-100 text-amber-800 border border-amber-200;
   }
-  
+
   .badge-cosecha {
-    @apply bg-purple-100 text-purple-800;
+    @apply bg-rose-100 text-rose-800 border border-rose-200;
   }
-  
+
   .semaforo-hoy {
-    @apply ring-2 ring-cultivo-500 bg-cultivo-50;
+    @apply ring-2 ring-emerald-500 bg-emerald-50;
+    background-image: linear-gradient(to bottom right, #ecfdf5, #d1fae5);
   }
-  
+
   .semaforo-proximo {
-    @apply ring-2 ring-yellow-400 bg-yellow-50;
+    @apply ring-2 ring-amber-400 bg-amber-50;
   }
+}
+
+/* Header styling */
+header {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(74, 222, 128, 0.2) !important;
+  /* Subtle green border */
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
